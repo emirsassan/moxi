@@ -1,14 +1,10 @@
 name: Build and Release
 
 on:
-  push:
-    branches:
-      - main
-      - 'refs/tags/*' # Match tags
   workflow_dispatch:
 
 jobs:
-  build:
+  build-and-release:
     runs-on: ubuntu-latest
 
     steps:
@@ -23,30 +19,41 @@ jobs:
       - name: Build moxi
         run: go build -o moxi main.go
 
-  create-release:
-    needs: build
-    runs-on: ubuntu-latest
+      - name: Determine current version
+        id: determine_version
+        run: echo "::set-output name=current_version::$(cat VERSION)"
 
-    steps:
-      - name: Get last stable release tag
-        id: get_last_stable_release
-        run: echo "::set-output name=last_stable_release::$(git describe --tags --abbrev=0 $(git rev-list --tags --max-count=1))"
+      - name: Auto-increment version
+        id: increment_version
+        run: echo "::set-output name=next_version::$(echo ${{ steps.determine_version.outputs.current_version }} | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')"
 
-      - name: Get changes since last stable release
-        id: get_changes
-        run: echo "::set-output name=changes::$(git log --format='- %s' ${{ steps.get_last_stable_release.outputs.last_stable_release }}..HEAD)"
+      - name: Update version file
+        run: echo "${{ steps.increment_version.outputs.next_version }}" > VERSION
 
-      - name: Determine tag name
-        id: determine_tag
-        run: echo "::set-output name=tag::$(echo ${{ github.ref }} | sed 's/refs\/tags\///')"
+      - name: Commit version change
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add VERSION
+          git commit -m "Auto-increment version to ${{ steps.increment_version.outputs.next_version }}"
+          git push
 
       - name: Create Release
+        id: create_release
         uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: moxi
-          tag_name: ${{ steps.determine_tag.outputs.tag }}
-          release_name: Release ${{ steps.determine_tag.outputs.tag || 'Unstable' }}
+          tag_name: v${{ steps.increment_version.outputs.next_version }}
+          release_name: Release v${{ steps.increment_version.outputs.next_version }}
           body: |
-            Changes since last stable release (${last_stable_release}):
-            ${{ steps.get_changes.outputs.changes }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+            Changes since last release:
+            $(git log --format='- %s' $(git describe --tags --abbrev=0)..HEAD)
+          draft: false
+          prerelease: false
+
+      - name: Upload moxi binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: moxi
+          path: moxi
