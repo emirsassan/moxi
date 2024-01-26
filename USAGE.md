@@ -7,6 +7,7 @@ Moxi is a lightweight build tool designed to be a simple alternative to CMake, f
 - [Tasks and Moxifile](#tasks-and-moxifile)
 - [Running Tasks](#running-tasks)
 - [Task Groups](#task-groups)
+- [Running All Tasks in a Group](#running-all-tasks-in-a-group)
 - [Advanced Usage](#advanced-usage)
 
 ## Tasks and Moxifile
@@ -74,6 +75,19 @@ Example:
 ```bash
 moxi build:compile
 ```
+
+## Running All Tasks in a Group
+To run all tasks within a group, use the following command:
+
+```bash
+moxi <group-name>
+```
+Example:
+
+```bash
+moxi build
+```
+This command executes all tasks defined within the specified group.
 
 ## Advanced Usage
 
