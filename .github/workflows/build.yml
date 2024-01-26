@@ -19,33 +19,13 @@ jobs:
       - name: Build moxi
         run: go build -o moxi main.go
 
-      - name: Determine current version
-        id: determine_version
-        run: echo "::set-output name=current_version::$(cat VERSION)"
-
-      - name: Auto-increment version
-        id: increment_version
-        run: echo "::set-output name=next_version::$(echo ${{ steps.determine_version.outputs.current_version }} | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')"
-
-      - name: Update version file
-        run: echo "${{ steps.increment_version.outputs.next_version }}" > VERSION
-
-      - name: Commit version change
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add VERSION
-          git commit -m "Auto-increment version to ${{ steps.increment_version.outputs.next_version }}"
-          git push
-
       - name: Create Release
-        id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.increment_version.outputs.next_version }}
-          release_name: Release v${{ steps.increment_version.outputs.next_version }}
+          tag_name: ${{ github.event.client_payload.tag }}
+          release_name: Release ${{ github.event.client_payload.tag }}
           body: |
             Changes since last release:
             $(git log --format='- %s' $(git describe --tags --abbrev=0)..HEAD)
