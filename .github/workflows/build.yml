@@ -4,10 +4,8 @@ on:
   push:
     branches:
       - main
+      - 'refs/tags/*' # Match tags
   workflow_dispatch:
-  push:
-    tags:
-      - '*'
 
 jobs:
   build:
