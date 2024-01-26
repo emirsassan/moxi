@@ -1,0 +1,50 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+
+      - name: Build moxi
+        run: go build -o moxi main.go
+
+  create-release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get last stable release tag
+        id: get_last_stable_release
+        run: echo "::set-output name=last_stable_release::$(git describe --tags --abbrev=0 $(git rev-list --tags --max-count=1))"
+
+      - name: Get changes since last stable release
+        id: get_changes
+        run: echo "::set-output name=changes::$(git log --format='- %s' ${{ steps.get_last_stable_release.outputs.last_stable_release }}..HEAD)"
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        with:
+          files: moxi
+          tag_name: ${{ github.event_name == 'push' && github.ref_type == 'tag' && contains(github.ref, 'refs/tags/') && replace(github.ref, 'refs/tags/', '') }}
+          release_name: Release ${{ github.event_name == 'push' && github.ref_type == 'tag' && contains(github.ref, 'refs/tags/') && replace(github.ref, 'refs/tags/', '') || 'Unstable' }}
+          body: |
+            Changes since last stable release (${last_stable_release}):
+            ${{ steps.get_changes.outputs.changes }}
+          token: ${{ secrets.GITHUB_TOKEN }}
