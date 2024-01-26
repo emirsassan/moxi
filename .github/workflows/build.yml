@@ -36,12 +36,16 @@ jobs:
         id: get_changes
         run: echo "::set-output name=changes::$(git log --format='- %s' ${{ steps.get_last_stable_release.outputs.last_stable_release }}..HEAD)"
 
+      - name: Determine tag name
+        id: determine_tag
+        run: echo "::set-output name=tag::$(echo ${{ github.ref }} | sed 's/refs\/tags\///')"
+
       - name: Create Release
         uses: actions/create-release@v1
         with:
           files: moxi
-          tag_name: ${{ github.event_name == 'push' && github.ref_type == 'tag' && contains(github.ref, 'refs/tags/') && replace(github.ref, 'refs/tags/', '') }}
-          release_name: Release ${{ github.event_name == 'push' && github.ref_type == 'tag' && contains(github.ref, 'refs/tags/') && replace(github.ref, 'refs/tags/', '') || 'Unstable' }}
+          tag_name: ${{ steps.determine_tag.outputs.tag }}
+          release_name: Release ${{ steps.determine_tag.outputs.tag || 'Unstable' }}
           body: |
             Changes since last stable release (${last_stable_release}):
             ${{ steps.get_changes.outputs.changes }}
