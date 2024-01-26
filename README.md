@@ -94,4 +94,4 @@ We welcome contributions from the community to enhance Moxi. If you'd like to co
 
 ## License
 
-Moxi is licensed under the [GNU General Public License (GPL) version 3.0](LICENSE).
+Moxi is licensed under the [Apache-2.0 license](LICENSE).
