@@ -49,7 +49,7 @@ moxi build
 Moxi supports task grouping for better organization. Groups are defined as follows:
 
 ```
-group <group-name> => {
+group <group-name> {
     task: <task-name> => <command>
     task: <task-name> => <command>
 }
@@ -58,7 +58,7 @@ group <group-name> => {
 Here's an example:
 
 ```
-group build => {
+group build {
     task: compile => go build -o myapp main.go
     task: test => go test ./...
 }
