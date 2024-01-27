@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"github.com/logrusorgru/aurora"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -33,18 +34,17 @@ func ParseTaskSyntax(input string) (Task, error) {
 }
 
 func RunTask(task Task) error {
-	fmt.Printf("Running task: %s\n", task.Name)
+	fmt.Println(aurora.Sprintf(aurora.BrightCyan("Running task '%s': %s"), task.Name, task.Command))
 
 	cmd := exec.Command("cmd", "/C", task.Command)
 
 	// Check command output.
 	if err := cmd.Run(); err != nil {
-		fmt.Printf("Failed: %v\n", err)
-		return err
+		fmt.Println(aurora.Sprintf(aurora.Red(err)))
+	} else {
+		fmt.Println(aurora.Sprintf(aurora.Green("Success: Task completed")))
 	}
 
-	// Task success message
-	fmt.Println("Success: Task completed")
 	return nil
 }
 
@@ -98,11 +98,11 @@ func parseGroupTasks(input string) ([]Task, error) {
 
 // RunGroup runs the tasks within a group
 func RunGroup(group Group) {
-	fmt.Printf("Running tasks for group '%s':\n", group.Name)
+	fmt.Println(aurora.Sprintf(aurora.BrightMagenta("Running tasks for group '%s':\n"), group.Name))
 	for _, task := range group.Tasks {
 		err := RunTask(task)
 		if err != nil {
-			fmt.Printf("Error: %v\n", err)
+			fmt.Println(aurora.Red("Error: %v\n"), err)
 		}
 	}
 }
