@@ -62,7 +62,7 @@ func main() {
 
 	for _, line := range lines {
 		// Check for group start
-		if strings.HasPrefix(line, "[group") {
+		if strings.HasPrefix(line, "group") {
 			group, err := parser.ParseGroupSyntax(line)
 			if err != nil {
 				fmt.Println("Error:", err)

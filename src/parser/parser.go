@@ -32,21 +32,6 @@ func ParseTaskSyntax(input string) (Task, error) {
 	return Task{Name: taskName, Command: command}, nil
 }
 
-func RunGroup(group Group) {
-	fmt.Printf("Running Group: %s\n", group.Name)
-
-	// Run each task in the group.
-	for _, task := range group.Tasks {
-		err := RunTask(task)
-		if err != nil {
-			fmt.Printf("Error: %v\n", err)
-		}
-	}
-
-	// Group completion message.
-	fmt.Printf("Success: Group completed: %s\n", group.Name)
-}
-
 func RunTask(task Task) error {
 	fmt.Printf("Running task: %s\n", task.Name)
 
@@ -65,15 +50,59 @@ func RunTask(task Task) error {
 
 func ParseGroupSyntax(input string) (Group, error) {
 	// Group structure validation using regex.
-	regex := regexp.MustCompile(`^\[group\s*([^\]]+)\]\s*$`)
+	regex := regexp.MustCompile(`^group\s*([^\s]+)\s*\{\s*$`)
 	matches := regex.FindStringSubmatch(input)
 
 	if len(matches) != 2 {
-		return Group{}, fmt.Errorf("Invalid group start")
+		return Group{}, fmt.Errorf("Invalid group syntax")
 	}
 
 	groupName := strings.TrimSpace(matches[1])
+	tasks, err := parseGroupTasks(input)
+	if err != nil {
+		return Group{}, err
+	}
 
-	group := Group{Name: groupName}
+	group := Group{
+		Name:  groupName,
+		Tasks: tasks,
+	}
+
 	return group, nil
+}
+
+// parseGroupTasks parses the tasks within a group
+func parseGroupTasks(input string) ([]Task, error) {
+	var tasks []Task
+
+	lines := strings.Split(input, "\n")
+
+	for _, line := range lines {
+		// Extract task name and command using a regex or custom logic
+		taskRegex := regexp.MustCompile(`^\s*task\s*:\s*([^\s]+)\s*=>\s*(.+)\s*$`)
+		taskMatches := taskRegex.FindStringSubmatch(line)
+
+		if len(taskMatches) == 3 {
+			taskName := strings.TrimSpace(taskMatches[1])
+			taskCommand := strings.TrimSpace(taskMatches[2])
+
+			tasks = append(tasks, Task{
+				Name:    taskName,
+				Command: taskCommand,
+			})
+		}
+	}
+
+	return tasks, nil
+}
+
+// RunGroup runs the tasks within a group
+func RunGroup(group Group) {
+	fmt.Printf("Running tasks for group '%s':\n", group.Name)
+	for _, task := range group.Tasks {
+		err := RunTask(task)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+		}
+	}
 }

@@ -1,0 +1,7 @@
+task: build => npm
+task: test => node -v
+
+group myGroup {
+    task: lint => npm
+}
+
